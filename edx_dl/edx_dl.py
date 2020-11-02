@@ -90,8 +90,8 @@ OPENEDX_SITES = {
         'url': 'https://mitxpro.mit.edu',
         'courseware-selector': ('nav', {'aria-label': 'Course Navigation'}),
     },
-    'bits':{
-        'url':'http://any-learn.bits-pilani.ac.in',
+    'bits': {
+        'url': 'http://any-learn.bits-pilani.ac.in',
         'courseware-selector': ('nav', {'aria-label': 'Course Navigation'}),
     }
 }
@@ -114,7 +114,8 @@ def change_openedx_site(site_name):
 
     sites = sorted(OPENEDX_SITES.keys())
     if site_name not in sites:
-        logging.error("OpenEdX platform should be one of: %s", ', '.join(sites))
+        logging.error("OpenEdX platform should be one of: %s",
+                      ', '.join(sites))
         sys.exit(ExitCode.UNKNOWN_PLATFORM)
 
     BASE_URL = OPENEDX_SITES[site_name]['url']
@@ -399,7 +400,6 @@ def parse_args():
 
     args = parser.parse_args()
 
-
     # Initialize the logging system first so that other functions
     # can use it right away.
     if args.debug:
@@ -422,7 +422,7 @@ def edx_get_headers():
     logging.info('Building initial headers for future requests.')
 
     headers = {
-        'User-Agent': 'edX-downloader/0.01',
+        'User-Agent': 'Mozilla/5.0',
         'Accept': 'application/json, text/javascript, */*; q=0.01',
         'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
         'Referer': EDX_HOMEPAGE,
@@ -442,7 +442,8 @@ def extract_units(url, headers, file_formats):
 
     page = get_page_contents(url, headers)
     page_extractor = get_page_extractor(url)
-    units = page_extractor.extract_units_from_html(page, BASE_URL, file_formats)
+    units = page_extractor.extract_units_from_html(
+        page, BASE_URL, file_formats)
 
     return units
 
@@ -469,7 +470,8 @@ def extract_all_units_in_parallel(urls, headers, file_formats):
     logging.info('Extracting all units information in parallel.')
     logging.debug('urls: ' + str(urls))
 
-    mapfunc = partial(extract_units, file_formats=file_formats, headers=headers)
+    mapfunc = partial(
+        extract_units, file_formats=file_formats, headers=headers)
     pool = ThreadPool(16)
     units = pool.map(mapfunc, urls)
     pool.close()
@@ -485,7 +487,8 @@ def _display_sections_menu(course, sections):
     """
     num_sections = len(sections)
 
-    logging.info('%s [%s] has %d sections so far', course.name, course.id, num_sections)
+    logging.info('%s [%s] has %d sections so far',
+                 course.name, course.id, num_sections)
     for i, section in enumerate(sections, 1):
         logging.info('%2d - Download %s videos', i, section.name)
 
@@ -539,7 +542,8 @@ def parse_courses(args, available_courses):
         exit(ExitCode.OK)
 
     if len(args.course_urls) == 0:
-        logging.error('You must pass the URL of at least one course, check the correct url with --list-courses')
+        logging.error(
+            'You must pass the URL of at least one course, check the correct url with --list-courses')
         exit(ExitCode.MISSING_COURSE_URL)
 
     selected_courses = [available_course
@@ -547,7 +551,8 @@ def parse_courses(args, available_courses):
                         for url in args.course_urls
                         if available_course.url == url]
     if len(selected_courses) == 0:
-        logging.error('You have not passed a valid course url, check the correct url with --list-courses')
+        logging.error(
+            'You have not passed a valid course url, check the correct url with --list-courses')
         exit(ExitCode.INVALID_COURSE_URL)
     return selected_courses
 
@@ -566,7 +571,8 @@ def parse_sections(args, selections):
         return selections
 
     filtered_selections = {selected_course:
-                           _filter_sections(args.filter_section, selected_sections)
+                           _filter_sections(
+                               args.filter_section, selected_sections)
                            for selected_course, selected_sections in selections.items()}
     return filtered_selections
 
@@ -629,7 +635,7 @@ def get_subtitles_urls(available_subs_url, sub_template_url, headers):
     elif sub_template_url is not None:
         try:
             available_subs = get_page_contents(sub_template_url,
-                                                       headers)
+                                               headers)
         except HTTPError:
             available_subs = ['en']
 
@@ -869,7 +875,8 @@ def remove_repeated_urls(all_units):
                     video_youtube_url = video.video_youtube_url
                     existing_urls.add(video_youtube_url)
 
-                mp4_urls, existing_urls = remove_duplicates(video.mp4_urls, existing_urls)
+                mp4_urls, existing_urls = remove_duplicates(
+                    video.mp4_urls, existing_urls)
 
                 if video_youtube_url is not None or len(mp4_urls) > 0:
                     videos.append(Video(video_youtube_url=video_youtube_url,
@@ -877,7 +884,8 @@ def remove_repeated_urls(all_units):
                                         sub_template_url=video.sub_template_url,
                                         mp4_urls=mp4_urls))
 
-            resources_urls, existing_urls = remove_duplicates(unit.resources_urls, existing_urls)
+            resources_urls, existing_urls = remove_duplicates(
+                unit.resources_urls, existing_urls)
 
             if len(videos) > 0 or len(resources_urls) > 0:
                 reduced_units.append(Unit(videos=videos,
@@ -1012,7 +1020,8 @@ def main():
 
     # Parse and select the available courses
     courses = get_courses_info(DASHBOARD, headers)
-    available_courses = [course for course in courses if course.state == 'Started']
+    available_courses = [
+        course for course in courses if course.state == 'Started']
     selected_courses = parse_courses(args, available_courses)
 
     # Parse the sections and build the selections dict filtered by sections
